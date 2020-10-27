@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <title>NRD Start Experiment</title>
+  </head>
+  <style>
+    body,html {
+ font-family:"Lucida Sans Unicode", "Lucida Grande", sans-serif, !important;
+  height:90%;
+    }
+    #wrapper {
+    width: 600px;
+    float:inherit;
+}
+#height_gap {
+    width: 1000px;
+    float:inherit;
+}
+  .more {
+  cursor:pointer;
+}
+  h2{
+    font-family:"Lucida Sans Unicode", "Lucida Grande", sans-serif
+  }
+</style>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">NRD Lab</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+      
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="../index.html">Home <span class="sr-only">(current)</span></a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="login_mp.html">Start a Multipart Experiment</a>
+            </li>
+            <li class="nav-item active">
+              <a class="nav-link" href="login_qe.html">Start a Quick Experiment</a>
+            </li>
+            </li>
+          </ul>
+        </div>
+      </nav>
+      <div class= "container h-100">
+        <div class="row h-100 justify-content-center align-items-center">
+            <h1></h1>
+            <h2></h2>
+            <div><h2 class="text-center">Please Enter Your Email and Choose an Experiment</h2>
+              <hr/>
+
+
+          </div>
+              <div id= "wrapper">
+              <form>
+                <div class="form-group">
+                    <div class="form-group">
+                        <label for="exp_id_1">Email</label>
+                        <input type="ID" class="form-control" id="email" aria-describedby="emailHelp" placeholder="Enter Email">
+                        </div>
+                  <div class="form-group">
+                    <label for="inputGroupSelect05">Experiment</label>
+                    <select class="custom-select" id="Experiment_chosen">
+                      <option selected>Choose...</option>
+                      <option value="NewEXP">NewEXP</option>
+                      <option value="Cookie Tester">Cookie Tester</option>
+                    </select>
+                  </div>
+  
+                    <div class="btn btn-primary btn-lg more" onclick="redirect()">Submit</div>
+                    <p id="warning" color="red"></p>
+                </form>
+              </div>
+        </div> 
+      </div>
+<script>
+  function redirect(){
+    // REMEMBER disabled component 
+    //bypassing the verification elements
+    //
+    var input_email=document.getElementById("email").value;
+    var input_exp=document.getElementById("Experiment_chosen").value;
+    var exp_passed=true
+    var email_passed=true
+
+      if (input_exp=="Choose..."){
+      document.getElementById("warning").innerText="Please Choose An Experiment"
+      document.getElementById("warning").style.color="red"
+      exp_passed=false}
+
+    if (input_email==""){
+      document.getElementById("warning").innerText="Please Enter a Valid Email"
+      document.getElementById("warning").style.color="red"
+      email_passed=false
+    }
+    //bypass here
+    // take out true || to revert
+    if(exp_passed && email_passed){
+    var email=input_email
+    var exp=input_exp
+    console.log("hi")
+    fetch("http://ec2-3-21-100-180.us-east-2.compute.amazonaws.com:3001",{
+    headers: { "Content-Type": "application/json" },
+    method:"POST",
+    body: JSON.stringify({"email":email,"exp":exp})})
+    .then((response)=>{
+      responded=response.json();
+    return responded})
+    .then((responded)=>{
+    console.log(responded.SID)
+    //add on server!!
+
+    document.cookie="register_loc=qe , exp="+exp+" , id="+responded.SID+" , email="+responded.email+"; path=/"
+    //addition_of_experiments
+    //NewEXP_start_redirect
+    if (exp=="NewEXP")
+    {location.href = "../NewEXP/consent/consent.html"};
+     //NewEXP_end_redirect
+
+    //cookie_task_start_redirect
+    if (exp=="Cookie Tester"){
+    location.href = "redirect_page_qe.html"
+    };
+    //cookie_task_end_redirect
+}
+
+    )
+    .catch((error)=>{
+      console.error("error:",error)
+    })
+
+  };}
+</script>
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+  </body>
+</html>
