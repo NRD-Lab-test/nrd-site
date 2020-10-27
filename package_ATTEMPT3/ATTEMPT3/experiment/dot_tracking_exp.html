@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>   
+    .stimulus {
+    margin: 0px;
+    width: 34px;
+    height: 34px;
+    background-color: transparent;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    border-radius:50%;
+  }
+    .ann_outer {
+        margin:0px;
+        width:400px;
+        height:400px;
+        background-color:transparent;
+        position: absolute;
+        top:146px;
+        left:300px;
+        border-radius:50%;
+    }
+    .ann_inner {
+        margin:0px;
+        width:385px;
+        height:385px;
+        background-color:transparent;
+        position: absolute;
+        top:154px;
+        left:308px;
+        border-radius:50%;
+    }
+    .red_dot {
+        margin:0px;
+        width: 34px;
+        height: 34px;
+        background-color:transparent;
+        position: absolute;
+        top:0px;
+        left:0px;
+        border-radius: 50%;
+    }   
+    .blue_dot {
+    margin: 0px;
+    width: 60px;
+    height: 60px;
+    background-color:transparent;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    border-radius: 50%;
+    }
+    .grey_cross1 {
+        margin: 0px;
+        width: 12px;
+        height: 4px;
+        background-color: grey;
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        border-radius:0%;
+        }
+    .grey_cross2 {
+        margin: 0px;
+        width: 4px;
+        height: 12px;
+        background-color:grey;
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        border-radius:0%;
+        }
+</style>
+
+<style type="text/css">
+    * {
+  cursor: none;
+    }
+</style>
+</head>
+<body style="background-color: black;">
+<script>function send_csv_file(obj){
+    SID=getCookie("id");
+    exp_name=getCookie("exp");
+    console.log(SID)
+    console.log(exp_name)
+    csv_name=csv_name(exp_name,SID);
+    csv_file=CsvFormatting(obj);
+    send_csv("http://ec2-3-21-100-180.us-east-2.compute.amazonaws.com:3000",csv_name,csv_file);};
+
+  function csv_name(exp_name,SID){
+    return String(exp_name)+"-"+String(SID)+".csv"
+  };
+
+  function send_csv(server_loc, csv_name,csv_file){
+  var url=new Blob([csv_file], { type: 'text/csv;charset=utf-8;' });
+  console.log(url)
+  var fd=new FormData();
+  fd.append("upl",url,csv_name);
+  fetch(server_loc,{
+  method:"POST",
+  body: fd})
+  .then((response)=>{
+    responded=response.json();
+  console.log(responded)})
+  .catch((error)=>{
+    console.error("error:",error)
+  })};
+
+  function CsvFormatting(obj){
+  var stringline='';
+  var number_of_times=obj[Object.keys(obj)[0]].length;
+  var keys = Object.keys(obj);
+  var completeString=[]
+  var stringToAdd='';
+  for (var k=0; k<keys.length; k++){
+      if (k==keys.length-1){
+          stringToAdd+='"'+keys[k]+'"'
+      }else{
+          stringToAdd+='"'+keys[k]+'",';}
+      }
+  stringToAdd+="\n";
+  completeString.push(stringToAdd);
+  stringToAdd='';
+  for (var i=0; i<number_of_times; i++){
+      stringToAdd=''
+      for (var j=0; j<keys.length; j++){
+          if (j==keys.length-1){
+              stringToAdd+='"'+JSON.stringify(obj[keys[j]][i])+'"';
+          }
+          else{
+              stringToAdd+='"'+JSON.stringify(obj[keys[j]][i])+'",';
+          };
+      };
+  completeString.push(stringToAdd);
+  };
+  var csv=completeString.join("\n");
+  return csv
+  };
+
+  function getCookie(cname) {
+  var name = cname + "=";
+  var decodedCookie = decodeURIComponent(document.cookie);
+  var ca = decodedCookie.split(',');
+  for(var i = 0; i <ca.length; i++) {
+    var c = ca[i];
+    while (c.charAt(0) == ' ') {
+      c = c.substring(1);
+    }
+    if (c.indexOf(name) == 0) {
+      return c.substring(name.length, c.length);
+    }
+  }
+  return "";
+}</script>
+
+<div class="ann_outer", id="outer_ann"></div>
+<div class="ann_inner", id="inner_ann"></div>
+<div class="blue_dot", id="bluestim"></div>
+<div class="red_dot", id="redDotP"></div>
+<div class="red_dot", id="redDotD"></div>
+<div class="stimulus", id="purpledot"></div>
+<div class="grey_cross1", id="crossair1"></div>
+<div class="grey_cross2", id="crossair2"></div>
+
+<script type="text/javascript"
+        src="https://cdn.jsdelivr.net/npm/emailjs-com@2/dist/email.min.js">
+</script>
+
+<script type="text/javascript">
+    (function(){
+       emailjs.init("user_Clvv7PrBHMmse9hVJyx7m");
+    })();
+ </script>
+
+    <script>
+        var time={t:0, t_trial:0, t_real: Date.now(), t_real_trial: Date.now(), last_v_time:1500};
+        var mousemove={value: false, xcoord:50,ycoord:50,limitxcoord:50,limitycoord:50, last_v_x:50, last_v_y:50, midx:0, midy:0, mousechunk:[]};
+        var systemChecks={initiationComp:false, trialNum:0, mouseonblue:false, mouseonred:false, firstTrial:false, moveToNext:false, csv_check:false, falseStart:false, tooSlow:false, velocityHappen: false, points: 0, end: false};
+        var trialConditions={redDotPX: 0, redDotPY: 0, redDotDX: 0, redDotDY: 0, red_dot_delay:0 };
+        var expParams={trials:900, jumpAngle:3.14/2, onComp:true, vmilli:6, trainTrials:50, download: true};
+        var placement={red_dot_s:[], red_dot_f:[], red_dot_delay:[]};
+        var elementColl={firstAnn:false, secondAnn:false, thirdAnn:false, redDotP:false, redDotD:false, move:false};
+        var instruction={terminate:false, enterpress:false, instr1ter:false, instr2ter:false, test:false, notstarted:true, mousered:false, finalseq:false, prompt:false, email:"", name:"", pass:true};
+        var millisecondR=3;
+        var toCsv={mousecoords:[], delayTime:[], redDotP:[], redDotD:[], firstMAngle:[], firstMtime:[], jumpAngle:[]};
+        var single_trial_info={mousecoords:"", delayTime:"", redDotP:"", redDotD:"", firstMAngle:"", firstMtime:"", jumpAngle:""}
+        var user_id=getCookie("id")
+        var user_registry_group=getCookie("register_loc")
+        window.setTimeout(add_time,millisecondR);
+        function add_time(){
+            window.setTimeout(add_time,millisecondR);
+            var w= Math.floor(window.innerWidth/2);
+            var h=Math.floor(window.innerHeight/2);
+            if (w!=mousemove.midx || h!=mousemove.midy){
+                updatePos()
+            };
+            var current_time=Date.now();
+            time.t=current_time-time.t_real;
+            if ((systemChecks.firstTrial==false && !instruction.test)||systemChecks.end){
+                time.t_trial=0
+            }
+            else{
+                mousemove.mousechunk.push([mousemove.limitxcoord,mousemove.limitycoord,time.t_trial]);
+                time.t_trial=current_time-time.t_real_trial;
+            };
+            if (systemChecks.end){
+                document.getElementById("instructions").innerHTML="Experiment Over. Thank You for Participating. Please press enter to be redirected to a debrief form"
+                if (instruction.enterpress){
+                redirect_debrief()
+            }}
+            if (!instruction.terminate){
+                if (!instruction.test){
+                if (!instruction.instr1ter){
+                    if (!instruction.prompt){
+                        //instruction.email=prompt("Please Enter Your Email");
+                        //instruction.name=prompt("Please Enter Experiment Subject ID");
+                        instruction.prompt=true;
+                    };
+                    document.getElementById("instructions").innerHTML="Welcome to the task! In this experiment you will be shown a similar sequence of events repeatedly. \nYour goal is to do an action at a specific time. Before starting the task, you will be given a tutorial.\n (press enter to begin the tutorial)";
+                    if (instruction.enterpress){
+                        document.getElementById("instructions").innerHTML="A purple dot will hover over where your mouse is on screen.\n In addition, at the center of your screen will be a blue dot. To begin a trial, simply move the purple dot into the center of the blue dot. You will want to keep the purple dot centered on the blue dot until a specific event happens. \n (Practice this by moving the purple dot to the center of the blue dot. Then press Enter to continue the tutorial)"
+                        document.getElementById("purpledot").style.backgroundColor="purple";
+                        document.getElementById("bluestim").style.backgroundColor="blue";
+                        instruction.instr1ter=true;
+                        instruction.enterpress=false;
+                    };
+                }else{
+                    if (systemChecks.mouseonblue && instruction.enterpress){
+                        if (instruction.pass){
+                        instruction.enterpress=false;
+                        instruction.pass=false
+                        };
+
+                        document.getElementById("instructions").innerHTML="After you start a new trial, you will see a white annulus flash onscreen accompanied by a red dot at some location. This will be followed by a second white annulus flash and then a third and final white annulus flash. Sometime between the second and third flash, the red dot will move to a new location. (Keep the cursor on the center of the blue dot and press enter to see this play out)"
+                        if (instruction.enterpress){
+                            instruction.test=true
+                        };
+                    };
+                }}
+                if (instruction.test){
+                if(instruction.notstarted){
+                    time.t_real_trial=Date.now()
+                    instruction.notstarted=false
+                };
+                document.getElementById("redDotP").style.left=300*Math.cos(3.14)+mousemove.midx-17+"px";
+                document.getElementById("redDotP").style.top=300*Math.sin(3.14)+mousemove.midy-17+"px";
+                document.getElementById("redDotD").style.left=-300*Math.cos(3.14+1.57)+mousemove.midx-17+"px";
+                document.getElementById("redDotD").style.top=-300*Math.sin(3.14+1.57)+mousemove.midy-17+"px";
+                document.getElementById("inner_ann").style.backgroundColor="black"
+                trialConditions.redDotDX=-300*Math.cos(3.14+1.57)+mousemove.midx-17
+                trialConditions.redDotDY=-300*Math.sin(3.14+1.57)+mousemove.midy-17
+                elementColl.move=true;
+                };
+                if (time.t_trial>1500 && !instruction.mousered){
+                    document.getElementById("instructions").innerHTML="Immediately after seeing the third annulus flash, you should move your cursor, the purple dot, as quickly as possible from the blue dot to the red dot. (practice this by moving your cursor from the blue dot to the red dot)"
+                    if (systemChecks.mouseonred){
+                        document.getElementById("instructions").innerHTML="If you move toward the second red dot before the third annulus flashes, you will be shown a message saying 'False Start!'. If you move too slowly after the third annulus flashes, you will be shown a message saying 'Too Slow!'. If either of these occur, you will get 0 points for the round. If you successfully complete a trial, you will be awarded 10 points. (press enter to continue)"
+                        instruction.mousered=true;
+                    };
+                };
+                if (instruction.mousered && instruction.enterpress && !instruction.finalSeq){
+                    document.getElementById("instructions").innerHTML="This experiment will continue until you play 900 trials or you reach 8000 points. Thus, it is in your best interest to complete the trials successfully. To go to the next trial simply move your cursor back onto the center of the blue dot. (To finish the tutorial, move the cursor back over the center of the blue dot and press enter.)";
+                    instruction.finalSeq=true;
+                    instruction.enterpress=false;
+                };
+                if (instruction.finalSeq && systemChecks.mouseonblue && instruction.enterpress){
+                    document.getElementById("instructions").innerHTML='';
+                    instruction.terminate=true;
+                };
+
+            };
+            if (instruction.enterpress){
+                instruction.enterpress=false
+            }
+//end instructions
+
+//trial run part
+            if (time.t_trial>=500 && elementColl.firstAnn==false){
+                if (time.t_trial<540){
+                    document.getElementById("outer_ann").style.backgroundColor = "white";
+                }
+                else{
+                    document.getElementById("outer_ann").style.backgroundColor = "transparent";
+                    elementColl.firstAnn=true;
+                }
+            };
+            if (time.t_trial>=1000 && elementColl.secondAnn==false){
+                if (time.t_trial<1040){
+                    document.getElementById("outer_ann").style.backgroundColor = "white";
+                }
+                else{
+                    document.getElementById("outer_ann").style.backgroundColor = "transparent";
+                    elementColl.secondAnn=true;
+                }
+            };
+            if (time.t_trial>=1500 && elementColl.thirdAnn==false){
+                if (time.t_trial<1540){
+                    document.getElementById("outer_ann").style.backgroundColor = "white";
+                }
+                else{
+                    document.getElementById("outer_ann").style.backgroundColor = "transparent";
+                    elementColl.thirdAnn=true;
+                }
+            };
+            if (time.t_trial>=500 && elementColl.redDotP==false){
+                if (time.t_trial<650){
+                    document.getElementById("redDotP").style.backgroundColor = "red";
+                }
+                else{
+                    document.getElementById("redDotP").style.backgroundColor = "transparent";
+                    elementColl.redDotP=true
+                }
+            }
+            if (time.t_trial>=1500-trialConditions.red_dot_delay && elementColl.redDotD==false){
+                document.getElementById("redDotD").style.backgroundColor = "red";
+                elementColl.redDotD=true
+            };
+            if (time.t_trial<1500 && time.t_trial>350 && !systemChecks.mouseonblue && instruction.terminate){
+                systemChecks.falseStart=true
+                document.getElementById("temp").innerHTML="False Start!"
+            };
+            if (time.t_trial>2250 && !systemChecks.velocityHappen && !systemChecks.falseStart && instruction.terminate){
+                systemChecks.tooSlow=true
+                document.getElementById("temp").innerHTML="Too Slow!"
+            };
+
+//velocity section
+
+            if (time.t_trial>1500 && elementColl.move==false && !systemChecks.falseStart && time.t_trial<2250){
+                if (time.t_trial>=expParams.vmilli+time.last_v_time){
+                xnow=mousemove.limitxcoord;
+                ynow=mousemove.limitycoord;
+                var v_t_trial=velocity(xnow, mousemove.last_v_x, ynow, mousemove.last_v_y, time.last_v_time, time.t_trial);
+                time.last_v_time=time.t_trial;
+                mousemove.last_v_x=xnow;
+                mousemove.last_v_y=ynow;
+                if (v_t_trial>4 && instruction.terminate){
+                    systemChecks.velocityHappen=true;
+                    angle_trial=angle_finder(mousemove.midx,mousemove.midy,xnow,ynow);
+                    toCsv.firstMAngle.push(angle_trial);
+                    toCsv.firstMtime.push(time.t_trial);
+                    single_trial_info.firstMAngle=angle_trial
+                    single_trial_info.firstMtime=time.t_trial
+                    elementColl.move=true
+
+                };
+            }};
+//trial part ends
+
+//checks for moving to next trial
+            if (systemChecks.initiationComp==false && instruction.terminate==true){
+                control_variables=trialBuilder();
+                systemChecks.initiationComp=true
+            };
+            if (systemChecks.initiationComp==true && systemChecks.mouseonblue==true && systemChecks.firstTrial==false){
+                systemChecks.moveToNext=true
+                systemChecks.firstTrial=true
+            };
+            if (systemChecks.firstTrial==true && systemChecks.moveToNext==true && systemChecks.mouseonblue==true){
+                if(!(systemChecks.csv_check)){
+
+                if (systemChecks.trialNum>0){
+                if (systemChecks.tooSlow){
+                    toCsv.firstMAngle.push("s")
+                    toCsv.firstMtime.push("s")
+                    single_trial_info.firstMAngle="s"
+                    single_trial_info.firstMtime="s"
+                };
+                if (systemChecks.falseStart){
+                    toCsv.firstMAngle.push("f")
+                    toCsv.firstMtime.push("f")
+                    single_trial_info.firstMAngle="f"
+                    single_trial_info.firstMtime="f"
+                };
+                if (!systemChecks.tooSlow && !systemChecks.falseStart && !systemChecks.end){
+                    //console.log(systemChecks.falseStart)
+                    systemChecks.points+=10
+                }
+                toCsv.mousecoords.push(mousemove.mousechunk);
+                toCsv.delayTime.push(placement.red_dot_delay[systemChecks.trialNum-1]);
+                toCsv.redDotP.push(placement.red_dot_s[systemChecks.trialNum-1]);
+                toCsv.redDotD.push(placement.red_dot_f[systemChecks.trialNum-1]);
+                toCsv.jumpAngle.push(placement.red_dot_f[systemChecks.trialNum-1]-placement.red_dot_s[systemChecks.trialNum-1])}
+                single_trial_info.mousecoords=mousemove.mousechunk
+                single_trial_info.delayTime=placement.red_dot_delay[systemChecks.trialNum-1]
+                single_trial_info.redDotP=placement.red_dot_s[systemChecks.trialNum-1]
+                single_trial_info.redDotD=placement.red_dot_f[systemChecks.trialNum-1]
+                single_trial_info.jumpAngle=placement.red_dot_f[systemChecks.trialNum-1]-placement.red_dot_s[systemChecks.trialNum-1]
+                document.getElementById("temp").innerHTML=""
+                document.getElementById("points").innerHTML="Total Points:"+systemChecks.points
+                systemChecks.velocityHappen=false
+                systemChecks.falseStart=false
+                systemChecks.tooSlow=false
+                //console.log(systemChecks.trialNum)
+                //console.log(toCsv);
+            }
+                if ((systemChecks.trialNum==expParams.trials||systemChecks.points==8000) && !systemChecks.csv_check){
+                    //
+                    //
+                    // TURN THESE ON!!!!!
+                    //
+                    //
+                    systemChecks.end=true;
+                    instruction.enterpress=false;
+                    new_csv=CsvFormatting(toCsv)
+                    //if(expParams.download){
+                    //    csv_downloader(new_csv)
+                    //};
+                    var subject_info=instruction.name+" "+instruction.email;
+                    //sendEmail(new_csv, subject_info)
+                    systemChecks.csv_check=true
+                }
+                if((systemChecks.trialNum!=expParams.trials) && (systemChecks.points!=8000)){
+                database_entry(user_id,user_registry_group,single_trial_info)
+                systemChecks.trialNum+=1;
+                time.t_trial=0;
+                systemChecks.moveToNext=false;
+                trialConditions.redDotPX=300*Math.cos(placement.red_dot_s[systemChecks.trialNum-1])+mousemove.midx-17;
+                trialConditions.redDotDX=300*Math.cos(placement.red_dot_f[systemChecks.trialNum-1])+mousemove.midx-17;
+                trialConditions.redDotPY=-300*Math.sin(placement.red_dot_s[systemChecks.trialNum-1])+mousemove.midy-17;
+                trialConditions.redDotDY=-300*Math.sin(placement.red_dot_f[systemChecks.trialNum-1])+mousemove.midy-17;
+                trialConditions.red_dot_delay=placement.red_dot_delay[systemChecks.trialNum-1];
+                systemChecks.moveToNext=false;
+                elementColl.firstAnn=false;
+                elementColl.secondAnn=false;
+                elementColl.thirdAnn=false;
+                elementColl.redDotP=false;
+                elementColl.redDotD=false;
+                elementColl.move=false;
+                time.t_real_trial=Date.now();
+                time.last_v_time=0;
+                mousemove.mousechunk=[];
+                dotSpots();}
+            };
+            onRedDot()
+            onBlueDot()
+            if (systemChecks.mouseonred && time.t_trial>1500){
+                systemChecks.moveToNext=true;
+                document.getElementById("redDotD").style.backgroundColor = "transparent";
+            };
+///////////
+            };
+//end of ginormous loop
+
+//collection of functions used in the loop
+            function updatePos(){
+                mousemove.midx=Math.floor(window.innerWidth/2);
+                mousemove.midy=Math.floor(window.innerHeight/2);
+                var ann_o_t=mousemove.midy-200;
+                var ann_o_l=mousemove.midx-200;
+                var ann_i_t=mousemove.midy-192;
+                var ann_i_l=mousemove.midx-192;
+                var blue_dot_t=mousemove.midy-30;
+                var blue_dot_l=mousemove.midx-30;
+                var crossair1_l=mousemove.midx-6;
+                var crossair1_t=mousemove.midy-2;
+                var crossair2_t=mousemove.midy-6;
+                var crossair2_l=mousemove.midx-2;
+                document.getElementById("outer_ann").style.top = ann_o_t+"px";
+                document.getElementById("outer_ann").style.left = ann_o_l+"px";
+                document.getElementById("inner_ann").style.top = ann_i_t+"px";
+                document.getElementById("inner_ann").style.left = ann_i_l+"px";
+                document.getElementById("bluestim").style.top = blue_dot_t+"px";
+                document.getElementById("bluestim").style.left = blue_dot_l+"px";
+                document.getElementById("crossair1").style.left = crossair1_l+"px";
+                document.getElementById("crossair2").style.left = crossair2_l+"px";
+                document.getElementById("crossair1").style.top = crossair1_t+"px";
+                document.getElementById("crossair2").style.top = crossair2_t+"px";
+
+
+        }
+        function csv_formatting(){
+
+        };
+        function csv_downloader(csv){
+            var blob= new Blob([csv],{type: "text/txt;charset=utf-8;"});
+            var link=document.createElement("a");
+            var url=URL.createObjectURL(blob);
+            link.setAttribute("href",url);
+            link.setAttribute("download" , "export.csv" );
+            link.style.visibility="hidden";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+        function dotSpots(){
+            document.getElementById("redDotP").style.top = trialConditions.redDotPY+"px";
+            document.getElementById("redDotP").style.left = trialConditions.redDotPX+"px";
+            document.getElementById("redDotD").style.top = trialConditions.redDotDY+"px";
+            document.getElementById("redDotD").style.left = trialConditions.redDotDX+"px";
+            };
+        function onRedDot(){
+            if (Math.sqrt(Math.pow(mousemove.limitxcoord-trialConditions.redDotDX-18,2)+Math.pow(mousemove.limitycoord-trialConditions.redDotDY-18,2))<10){
+                systemChecks.mouseonred=true;
+            }else{
+                systemChecks.mouseonred=false;
+            }
+        };
+        function onBlueDot(){
+            if (Math.sqrt(Math.pow(mousemove.xcoord-mousemove.midx,2)+Math.pow(mousemove.ycoord-mousemove.midy,2))<10){
+                systemChecks.mouseonblue=true;}
+            else{
+                systemChecks.mouseonblue=false;
+            }
+        };
+
+        function trialBuilder(){
+            for (var i=0; i<expParams.trials; i++){
+                var random_red=3.14*Math.random();
+                var random_delay=1000*.5*Math.random();
+                placement.red_dot_s.push(random_red);
+                placement.red_dot_delay.push(random_delay);
+                if (i>expParams.trainTrials){
+                    var kalmanRoll=Math.random();
+                    if (kalmanRoll<.30){
+                        //var kalmanAngle=2*3.14*Math.random()-3.14;
+                        var kalmanAngle=random_red+3*3.14/4;
+                        placement.red_dot_f.push(kalmanAngle);
+                        //console.log(i)
+                    }else{
+                        placement.red_dot_f.push(random_red+expParams.jumpAngle);
+                    };
+                }else{
+                    placement.red_dot_f.push(random_red+expParams.jumpAngle);
+                };
+            };
+            };
+        function MousePos(e){
+            return {x:e.clientX,y:e.clientY
+            }};
+        function velocity(x1,x2,y1,y2,time1,time2){
+            return Math.sqrt(Math.pow(x1-x2,2)+Math.pow(y1-y2,2))/(time2-time1)
+        };
+        function angle_finder(centerx, centery,x,y){
+            var magnitude=Math.sqrt(Math.pow(centerx-x,2)+Math.pow(centery-y,2));
+            normalizedLoc=(x-centerx)/magnitude;
+            if ((centery-y)>0){
+                angle=Math.acos(normalizedLoc);
+            }else{
+                angle=2*3.14-Math.acos(normalizedLoc);
+            };
+            return angle
+        };
+        function MouseLimit(x,y, midx, midy){
+            var numx=midx;
+            var numy=midy;
+            const circle_width=300;
+            if (Math.sqrt(Math.pow((x-numx),2)+Math.pow((y-numy),2))>circle_width){
+                var magnitude=Math.sqrt(Math.pow((x-numx),2)+Math.pow((y-numy),2));
+                return{x1:circle_width*(x-numx)/magnitude+numx,y1:circle_width*(y-numy)/magnitude+numy}}
+            else {
+                return {x1:x,y1:y}
+            };
+            };
+        function sendEmail(csv,subject_information){
+            var templateParams = {
+                name: 'Automated',
+                message_html: csv,
+                subject_info: subject_information};
+            emailjs.send('lanelewis406@gmail.com', 'template_V94pRZiP', templateParams)
+                .then(function(response) {
+                console.log('SUCCESS!', response.status, response.text);
+                }, function(error) {
+                console.log('FAILED...', error);
+                });}
+
+        function CsvFormatting(obj){
+            var stringline='';
+            var number_of_times=obj[Object.keys(obj)[0]].length;
+            var keys = Object.keys(obj);
+            var completeString=[]
+            var stringToAdd='';
+            for (var k=0; k<keys.length; k++){
+                if (k==keys.length-1){
+                    stringToAdd+='"'+keys[k]+'"'
+                }else{
+                    stringToAdd+='"'+keys[k]+'",';}
+                }
+            stringToAdd+="\n";
+            completeString.push(stringToAdd);
+            stringToAdd='';
+            for (var i=0; i<number_of_times; i++){
+                stringToAdd=''
+                for (var j=0; j<keys.length; j++){
+                    if (j==keys.length-1){
+                        stringToAdd+='"'+JSON.stringify(obj[keys[j]][i])+'"';
+                    }
+                    else{
+                        stringToAdd+='"'+JSON.stringify(obj[keys[j]][i])+'",';
+                    };
+                };
+            completeString.push(stringToAdd);
+            };
+            var csv=completeString.join("\n");
+            return csv
+            };
+            function redirect_debrief(){
+                location.href="../debrief/Debrief_form_dot_1.html"
+            };
+            function getCookie(cname) {
+                var name = cname + "=";
+                var decodedCookie = decodeURIComponent(document.cookie);
+                var ca = decodedCookie.split(',');
+                for(var i = 0; i <ca.length; i++) {
+                  var c = ca[i];
+                  while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                  }
+                  if (c.indexOf(name) == 0) {
+                    return c.substring(name.length, c.length);
+                  }
+                }
+                return "";
+}
+// end of function section
+
+//listeners for mouse and enter
+        document.onmousemove=function(e){
+            var mousecoords=MousePos(e);
+            var k =document.getElementById('purpledot');
+            var xy=MouseLimit(mousecoords.x, mousecoords.y, mousemove.midx, mousemove.midy);
+            k.style.postion="absolute";
+            k.style.left=(xy.x1-17)+"px";
+            k.style.top=(xy.y1-17)+"px";
+            mousemove.value=true;
+            mousemove.xcoord=mousecoords.x
+            mousemove.ycoord=mousecoords.y
+            mousemove.limitxcoord=xy.x1
+            mousemove.limitycoord=xy.y1
+            };
+        document.addEventListener("keypress",function(e){
+            if (e.key=="Enter"){
+                instruction.enterpress=true
+            };
+        })
+// For database entry:
+function database_entry(user_id, user_registry_group, csv_line){
+    //user id is the subject's registered or sona id, csv_line is an object,
+    // user_registry_group is whether they are from sona or on site. If on site
+    // it contains additional distictive information.
+    // All these are strings
+
+    //conversion to single csv line for both object keys and trial information.
+    csv_keys=convert_to_csv(Object.values(csv_line))
+    single_csv_line=convert_to_csv(Object.keys(csv_line))
+    //
+    console.log(user_registry_group)
+    console.log(user_id)
+    function convert_to_csv(object_list){
+    nums=object_list.length
+    string_csv_line="";
+    for (i=0;i<nums-1;i++){
+        string_csv_line+="'"+JSON.stringify(object_list[i])+"',"
+    }
+    string_csv_line+="'"+JSON.stringify(object_list[i])+"'\\n"
+    return string_csv_line
+    }
+}
+
+    </script>
+<h1 id="temp" , style=color:azure;></h1>
+<h2 id="instructions", style=color:white;></h2>
+<h1 id="points", style=color:white;></h1>
+</body>
+</html> 
