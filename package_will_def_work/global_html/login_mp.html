@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <title>NRD Start Experiment</title>
+  </head>
+  <style>
+    body,html {
+ font-family:"Lucida Sans Unicode", "Lucida Grande", sans-serif, !important;
+  height:90%;
+    }
+    #wrapper {
+    width: 600px;
+    float:inherit;
+}
+#height_gap {
+    width: 1000px;
+    float:inherit;
+}
+  .more {
+  cursor:pointer;
+}
+  h2{
+    font-family:"Lucida Sans Unicode", "Lucida Grande", sans-serif
+  }
+</style>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">NRD Lab</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+      
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="../index.html">Home <span class="sr-only">(current)</span></a>
+            </li>
+            <li class="nav-item active">
+              <a class="nav-link" href="login_mp.html">Start a Multipart Experiment</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="login_qe.html">Start a Quick Experiment</a>
+            </li>
+            </li>
+          </ul>
+        </div>
+      </nav>
+      <div class= "container h-100">
+        <div class="row h-100 justify-content-center align-items-center">
+            <div><div class="row h-75 justify-content-center align-items-center text-center ">
+                <p></p>
+                <div><div class="center"><h2>Please enter your Subject ID, the email you registered under, and the experiment you wish to run.</h2></div>
+                <p class="text-center">If you do not have a Subject ID number, please register first</p>
+                <hr/>
+
+                <p id="height"></p>
+                <div class="btn-group btn-group-toggle">
+                  <a class="btn btn-secondary darkbutton" href="register_mp.html" role="Login" aria-disabled="true">Register</a>
+  
+                </div>
+                <hr/>
+
+          </div>
+              </div>
+          </div>
+
+              <div id= "wrapper">
+              <form>
+                <div class="form-group">
+                    <div class="form-group">
+                        <label for="exp_id_1">Subject ID Number</label>
+                        <input type="ID" class="form-control" id="ID_number" aria-describedby="emailHelp" placeholder="Enter ID">
+                        </div>
+                  <div class="form-group">
+                    <label for="exp_id_1">Email</label>
+                    <input type="ID" class="form-control" id="ID_number" aria-describedby="emailHelp" placeholder="Enter Email">
+                    </div>
+                    <div class="form-group">
+                        <label for="inputGroupSelect05">Experiment</label>
+                        <select class="custom-select" id="Experiment_chosen">
+                          <option selected>Choose...</option>
+                      <option value="will_def_work">will_def_work</option>
+                          <option value="Dot Task 1">Dot Task 1</option>
+                          <option value="Gate Task">Gate Task</option>
+                        </select>
+                      </div>
+                    <div class="btn btn-primary btn-lg more" onclick="redirect()">Submit</div>
+                    <p id="warning" color="red"></p>
+                </form>
+              </div>
+              <hr/>
+
+        </div> 
+      </div>
+<script>
+  function redirect(){
+    // REMEMBER disabled component 
+    //bypassing the verification elements
+    //
+    var input_id=document.getElementById("ID_number").value;
+    var input_exp=document.getElementById("Experiment_chosen").value;
+    console.log(sessionStorage.getItem('number'));
+    console.log(input_exp)
+    if (input_exp!=sessionStorage.getItem('experiment')){
+      if (input_exp=="Choose..."){
+      document.getElementById("warning").innerText="Please Choose An Experiment"
+      document.getElementById("warning").style.color="red"}
+    else{
+      document.getElementById("warning").innerText="Invalid Experiment"
+      document.getElementById("warning").style.color="red"}
+    }
+    if (input_id!=sessionStorage.getItem('number')){
+      document.getElementById("warning").innerText="Please Enter a Valid ID"
+      document.getElementById("warning").style.color="red"
+    }
+    //bypass here
+    // take out true || to revert
+    if( true||((input_id==sessionStorage.getItem('number'))&&(input_exp==sessionStorage.getItem('experiment')))){
+    //addition_of_experiments
+    //will_def_work_start_redirect
+    if (input_exp=="will_def_work")
+    {location.href = "/Users/lanelewis/Fall_2020_Class/Research/electron_app/website_builder_copy/templates/../user_output/will_def_work/experiment/simple_exp.html"};
+     //will_def_work_end_redirect
+
+    if (input_exp=="Dot Task 1"){
+    location.href = "../consent/consent_form_dot_task_1.html";
+    };
+    if (input_exp=="Gate Task"){
+    location.href = "..consent/gate_task_consent.html";
+    };
+  };}
+</script>
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+  </body>
+</html>
